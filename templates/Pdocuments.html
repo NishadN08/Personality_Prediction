@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Personality Prediction</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap (CDN) -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  >
+
+  <style>
+    body { background: #f8fafc; }
+    .hero-img { max-height: 360px; object-fit: cover; }
+    .badge-score { font-variant-numeric: tabular-nums; }
+    .table thead th { cursor: pointer; }
+  </style>
+</head>
+
+<body>
+  <!-- Header -->
+  <header class="bg-white border-bottom">
+    <div class="container py-3 d-flex align-items-center justify-content-between">
+      <h1 class="h4 mb-0">Personality Prediction</h1>
+    </div>
+  </header>
+
+  <section class="container mt-4">
+    <div class="card shadow-sm">
+      <img
+        class="card-img-top hero-img"
+        src="{{ url_for('static', filename='Horizontal.webp') }}"
+        loading="lazy"
+      >
+      <div class="card-body">
+        <p class="mb-2">
+          Find your personality type using text analysis. Enter any sentence below(e.g., <em>Any personal thought</em>, <em>Your daily activities</em>, <em>or What you are thinking right now?</em>)
+          and this application will rank the top 5 most similar types using the 16 Myers-Briggs Personality Types.
+        </p>
+      
+
+        <!-- Search form -->
+        <form method="post" class="row g-2 align-items-center">
+          <div class="col-12 col-md-7">
+            <input
+              name="question1_field"
+              class="form-control form-control-lg"
+              placeholder="Enter search term(s)…"
+              value="{{ data1 or '' }}"
+              aria-label="Search terms"
+              autofocus
+            >
+          </div>
+          <div class="col-6 col-md-3 d-grid">
+            <button class="btn btn-primary btn-lg" type="submit">Search</button>
+          </div>
+        </form>
+
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <div class="alert alert-info mt-3 mb-0">{{ messages[0] }}</div>
+          {% endif %}
+        {% endwith %}
+  </section>
+
+  <!-- Results -->
+  <main class="container my-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+          <h2 class="h5 mb-0">Relevant Personality Types</h2>
+        </div>
+
+        <!-- Search filter -->
+
+        <div class="table-responsive">
+          <table id="resultsTable" class="table table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th data-sort="num">Rank ▲▼</th>
+                <th>Type</th>
+                <th data-sort="num">SimiScore ▲▼</th>
+                <th>Search Term</th>
+                <th title="Introverted / Extraverted">I/E</th>
+                <th title="Intuitive / Sensing">N/S</th>
+                <th title="Thinking / Feeling">T/F</th>
+                <th title="Judging / Perceiving">J/P</th>
+
+              </tr>
+            </thead>
+            <tbody id="resultsBody">
+              {% for d in docs %}
+              <tr>
+                <td class="fw-bold">{{ d["Rank"] }}</td>
+                <td><span class="badge bg-secondary">{{ d["type"] }}</span></td>
+                <td><span class="badge bg-light text-dark badge-score">
+                  {{ '%.4f'|format(d["Simiscore"]) if d["Simiscore"] is number else d["Simiscore"] }}
+                </span></td>
+                <td class="text-muted search-term">{{ d["Search Term"] }}</td>
+                <td>{{ d["Introversion/Extraversion"] }}</td>
+                <td>{{ d["Intuitive/Observant"] }}</td>
+                <td>{{ d["Thinking/Feeling"] }}</td>
+                <td>{{ d["Judging/Perceiving"] }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        {% if not docs or docs|length == 0 %}
+          <div class="alert alert-info mb-0">
+            No results yet. Try searching for terms like <strong>education</strong>, <strong>health</strong>, or <strong>finance</strong>.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Lightweight sort + filter -->
+  <script>
+    (function() {
+      const table = document.getElementById('resultsTable');
+      const tbody = document.getElementById('resultsBody');
+      const filterInput = document.getElementById('tableFilter');
+      const qTextEl = document.getElementById('q-text');
+      const query = (qTextEl ? qTextEl.textContent : '').trim();
+
+      // Simple sort
+      const getCell = (row, idx) => row.children[idx].innerText.trim();
+      let sortDir = 1;
+      table.querySelectorAll('thead th').forEach((th, idx) => {
+        th.addEventListener('click', () => {
+          const rows = Array.from(tbody.querySelectorAll('tr'));
+          const numeric = th.dataset.sort === 'num';
+          rows.sort((a, b) => {
+            const A = getCell(a, idx);
+            const B = getCell(b, idx);
+            const aVal = numeric ? parseFloat(A) : A.toLowerCase();
+            const bVal = numeric ? parseFloat(B) : B.toLowerCase();
+            if (aVal < bVal) return -1 * sortDir;
+            if (aVal > bVal) return 1 * sortDir;
+            return 0;
+          });
+          sortDir *= -1;
+          rows.forEach(r => tbody.appendChild(r));
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
