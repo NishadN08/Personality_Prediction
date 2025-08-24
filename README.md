@@ -1,4 +1,4 @@
-# Personality_Prediction_using_social_media
+# Personality Prediction using social media 🔍🧠
 
 A Flask-based web application that uses text analysis and TF-IDF similarity to predict the most relevant Myers-Briggs personality types based on a user’s input.
 
